@@ -78,14 +78,26 @@ static void tcpip_handler ( void )
 		PRINTF(" Recebidos %d bytes \n" , uip_datalen ());
 		switch (dados [0])
 		{
-		case SEND_ECHO :
+		case LED_SET_STATE :
 		{
 			uip_ipaddr_copy (& g_conn -> ripaddr , & UIP_IP_BUF -> srcipaddr );
 			g_conn -> rport = UIP_UDP_BUF -> destport ;
-			uip_udp_packet_send (g_conn , dados , uip_datalen ());
-			PRINTF(" Enviando eco para [");
+			leds_on(dados[1]);
+			buf[0] = LED_STATE;
+			buf[1] = leds_get();
+			uip_udp_packet_send (g_conn , buf ,2);
+			//break ommited
+		}
+		case LED_GET_STATE :
+		{
+			uip_ipaddr_copy (& g_conn -> ripaddr , & UIP_IP_BUF -> srcipaddr );
+			g_conn -> rport = UIP_UDP_BUF -> destport ;
+			buf[0] = LED_STATE;
+			buf[1] = leds_get();
+			uip_udp_packet_send (g_conn , buf ,2);
+			/*PRINTF(" Enviando eco para [");
 			PRINT6ADDR (& g_conn -> ripaddr );
-			PRINTF("]:% u\n", UIP_HTONS (g_conn -> rport ));
+			PRINTF("]:% u\n", UIP_HTONS (g_conn -> rport ));*/
 			break ;
 		}
 		default :
@@ -111,9 +123,14 @@ timeout_handler(void)
 
   PRINTF("Cliente para [");
   PRINT6ADDR(&g_conn->ripaddr);
-  PRINTF("]:%u,", UIP_HTONS(g_conn->rport));
-
-  uip_udp_packet_send(g_conn, buf, MAX_PAYLOAD_LEN);
+  PRINTF("]:%u,\n", UIP_HTONS(g_conn->rport));
+  if(uip_ds6_get_global(ADDR_PREFERRED) == NULL){
+	  PRINTF("O Nó ainda não tem um IP global Válido\n");
+  }
+  else{
+  buf[0] = LED_TOGGLE_REQUEST;
+  uip_udp_packet_send(g_conn, buf , 1);
+  }
   
 }
 /*---------------------------------------------------------------------------*/
@@ -157,7 +174,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   PRINTF(" local/remote port %u/%u\n",
          UIP_HTONS(l_conn->lport), UIP_HTONS(l_conn->rport));
 
-  uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0x0212, 0x4b00, 0x07b9, 0x5e8d);
+  uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0x0212, 0x4b00, 0x7b9, 0x5d35);
   g_conn = udp_new(&ipaddr, UIP_HTONS(GLOBAL_CONN_PORT), NULL);
   if(!g_conn) {
     PRINTF("udp_new g_conn error.\n");

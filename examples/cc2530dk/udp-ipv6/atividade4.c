@@ -70,7 +70,7 @@ AUTOSTART_PROCESSES(&udp_client_process);
 /*---------------------------------------------------------------------------*/
 static void tcpip_handler ( void )
 {
-	char i=0;
+		char i=0;
 	#define SEND_ECHO (0xBA)
 	if( uip_newdata ()) // verifica se novos dados foram recebidos
 	{
@@ -82,10 +82,11 @@ static void tcpip_handler ( void )
 		{
 			uip_ipaddr_copy (& g_conn -> ripaddr , & UIP_IP_BUF -> srcipaddr );
 			g_conn -> rport = UIP_UDP_BUF -> destport ;
+			leds_off(LEDS_ALL);
 			leds_on(dados[1]);
-			buf[0] = LED_STATE;
+			/*buf[0] = LED_STATE;
 			buf[1] = leds_get();
-			uip_udp_packet_send (g_conn , buf ,2);
+			uip_udp_packet_send (g_conn , buf ,2);*/
 			//break ommited
 		}
 		case LED_GET_STATE :
@@ -128,8 +129,8 @@ timeout_handler(void)
 	  PRINTF("O Nó ainda não tem um IP global Válido\n");
   }
   else{
-  buf[0] = LED_TOGGLE_REQUEST;
-  uip_udp_packet_send(g_conn, buf , 1);
+	  buf[0] = LED_TOGGLE_REQUEST;
+	  uip_udp_packet_send(g_conn, buf , 1);
   }
   
 }
@@ -161,7 +162,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   PROCESS_BEGIN();
   PRINTF("UDP client process started\n");
 
-  uip_ip6addr(&ipaddr, 0xfe80, 0, 0, 0, 0x0212, 0x4b00, 0x07b9, 0x5e8d);
+  uip_ip6addr(&ipaddr, 0xfe80, 0, 0, 0, 0x0212, 0x4b00, 0x07c3, 0xb5e4);
   /* new connection with remote host */
   l_conn = udp_new(&ipaddr, UIP_HTONS(LOCAL_CONN_PORT), NULL);
   if(!l_conn) {
@@ -174,7 +175,7 @@ PROCESS_THREAD(udp_client_process, ev, data)
   PRINTF(" local/remote port %u/%u\n",
          UIP_HTONS(l_conn->lport), UIP_HTONS(l_conn->rport));
 
-  uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0x0212, 0x4b00, 0x7b9, 0x5d35);
+  uip_ip6addr(&ipaddr, 0xaaaa, 0, 0, 0, 0x0212, 0x4b00, 0x07c3, 0xb5e4);
   g_conn = udp_new(&ipaddr, UIP_HTONS(GLOBAL_CONN_PORT), NULL);
   if(!g_conn) {
     PRINTF("udp_new g_conn error.\n");
@@ -196,7 +197,8 @@ PROCESS_THREAD(udp_client_process, ev, data)
       timeout_handler();
       etimer_restart(&et);
     } else if(ev == tcpip_event) {
-      tcpip_handler();
+    	PRINTF(" dado recebido\n\n :");
+    	tcpip_handler();
     }
   }
 
